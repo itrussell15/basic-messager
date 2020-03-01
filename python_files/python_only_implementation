@@ -1,0 +1,45 @@
+import urllib, json, requests
+import datetime
+import imaplib
+import email as rand
+from bs4 import BeautifulSoup
+import pandas as pd
+
+class Messager:
+	def __init__(self, email, password):
+	       	self.url = url
+	        self.email = email
+	        self.password = password
+	        self.data = pd.DataFrame()
+
+    def check_unread(self, server = "imap.gmail.com"):
+        con = imaplib.IMAP4_SSL(server)
+        con.login(self.email, self.password)
+        con.select("Inbox")
+        typ, data = con.search(None, "(UNSEEN)")
+        msgs = []
+        for num in data[0].split():
+            typ, data = con.fetch(num, "(RFC822)")
+            msg = rand.message_from_bytes(data[0][1])
+            output = {}
+            output["author"] = " ".join(msg["From"].split()[:-1])
+            output["message_date"] = msg["Date"]
+            soup = BeautifulSoup(msg.get_payload()[1].as_string())
+            output["body"] = soup.find("body").find("div").get_text()
+            typ, data = con.store(num, "-FLAGS", "//Seen")
+            con.close()
+            msgs.append(output)
+        if len(msgs) == 0:
+            print("No unread messages found")
+            return None
+        else:
+        	df = pd.DataFrame().from_records(msgs)
+        	return df
+
+	def add_unread(self):
+		in_data = self.check_unread()
+		self.data.append(in_data)
+
+
+	
+            
